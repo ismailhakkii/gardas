@@ -57,6 +57,9 @@ class Settings extends Equatable {
   
   /// Whether notifications are enabled
   final bool notificationsEnabled;
+  
+  /// Whether fun mode is enabled
+  final bool funModeEnabled;
 
   /// Constructor for Settings entity
   const Settings({
@@ -66,6 +69,7 @@ class Settings extends Equatable {
     required this.soundVolume,
     required this.vibrationEnabled,
     required this.notificationsEnabled,
+    this.funModeEnabled = true, // Varsayılan olarak aktif
   });
 
   /// Creates a new Settings instance with default values
@@ -77,6 +81,7 @@ class Settings extends Equatable {
       soundVolume: AppConstants.defaultSoundVolume,
       vibrationEnabled: AppConstants.defaultVibrationEnabled,
       notificationsEnabled: AppConstants.defaultNotificationsEnabled,
+      funModeEnabled: true, // Varsayılan olarak aktif
     );
   }
 
@@ -88,6 +93,7 @@ class Settings extends Equatable {
     double? soundVolume,
     bool? vibrationEnabled,
     bool? notificationsEnabled,
+    bool? funModeEnabled,
   }) {
     return Settings(
       themeMode: themeMode ?? this.themeMode,
@@ -96,6 +102,7 @@ class Settings extends Equatable {
       soundVolume: soundVolume ?? this.soundVolume,
       vibrationEnabled: vibrationEnabled ?? this.vibrationEnabled,
       notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
+      funModeEnabled: funModeEnabled ?? this.funModeEnabled,
     );
   }
 
@@ -107,5 +114,6 @@ class Settings extends Equatable {
     soundVolume,
     vibrationEnabled,
     notificationsEnabled,
+    funModeEnabled,
   ];
 }

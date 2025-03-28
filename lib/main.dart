@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gardas/core/constants/app_constants.dart';
 import 'package:gardas/core/theme/app_theme.dart';
+import 'package:gardas/core/theme/fun_app_theme.dart'; // Eğlenceli tema importu
 import 'package:gardas/domain/entities/settings.dart';
 import 'package:gardas/injection_container.dart' as di;
 import 'package:gardas/presentation/bloc/settings/settings_bloc.dart';
@@ -53,15 +54,20 @@ class MyApp extends StatelessWidget {
         builder: (context, state) {
           // Get theme mode from settings
           ThemeMode themeMode = ThemeMode.system;
+          bool useFunTheme = true; // Varsayılan olarak eğlenceli tema kullan
           
           if (state is SettingsLoaded) {
             themeMode = _getThemeMode(state.settings.themeMode);
+            useFunTheme = state.settings.funModeEnabled;
+            
+            // Güncellenen ayarın AppRouter'a bildirilmesi
+            appRouter.useFunMode = useFunTheme;
           }
           
           return MaterialApp(
             title: AppConstants.appName,
-            theme: AppTheme.lightTheme,
-            darkTheme: AppTheme.darkTheme,
+            theme: useFunTheme ? FunAppTheme.lightTheme : AppTheme.lightTheme,
+            darkTheme: useFunTheme ? FunAppTheme.darkTheme : AppTheme.darkTheme,
             themeMode: themeMode,
             initialRoute: AppConstants.homeRoute,
             routes: appRouter.routes,

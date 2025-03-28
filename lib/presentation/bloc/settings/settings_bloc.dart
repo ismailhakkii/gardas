@@ -20,11 +20,12 @@ class GetSettingsEvent extends SettingsEvent {}
 
 class UpdateSettingsEvent extends SettingsEvent {
   final Settings settings;
+  final bool? funModeEnabled; // updated type to allow null
 
-  const UpdateSettingsEvent(this.settings);
+  const UpdateSettingsEvent(this.settings, {this.funModeEnabled});
 
   @override
-  List<Object?> get props => [settings];
+  List<Object?> get props => [settings, funModeEnabled];
 }
 
 class UpdateThemeModeEvent extends SettingsEvent {
@@ -201,7 +202,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
         soundVolume: event.volume ?? currentSettings.soundVolume,
       );
       
-      add(UpdateSettingsEvent(updatedSettings));
+      add(UpdateSettingsEvent(updatedSettings, funModeEnabled: null));
     }
   }
 
@@ -215,7 +216,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
         vibrationEnabled: event.enabled,
       );
       
-      add(UpdateSettingsEvent(updatedSettings));
+      add(UpdateSettingsEvent(updatedSettings, funModeEnabled: null));
     }
   }
 

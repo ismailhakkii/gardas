@@ -12,6 +12,7 @@ class SettingsModel extends Settings {
     required double soundVolume,
     required bool vibrationEnabled,
     required bool notificationsEnabled,
+    bool funModeEnabled = true,
   }) : super(
     themeMode: themeMode,
     languageCode: languageCode,
@@ -19,6 +20,7 @@ class SettingsModel extends Settings {
     soundVolume: soundVolume,
     vibrationEnabled: vibrationEnabled,
     notificationsEnabled: notificationsEnabled,
+    funModeEnabled: funModeEnabled,
   );
 
   /// Creates a [SettingsModel] from a JSON map
@@ -30,6 +32,7 @@ class SettingsModel extends Settings {
       soundVolume: (json['sound_volume'] ?? 0.7).toDouble(),
       vibrationEnabled: json['vibration_enabled'] ?? true,
       notificationsEnabled: json['notifications_enabled'] ?? true,
+      funModeEnabled: json['fun_mode_enabled'] ?? true,
     );
   }
 
@@ -42,6 +45,7 @@ class SettingsModel extends Settings {
       'sound_volume': soundVolume,
       'vibration_enabled': vibrationEnabled,
       'notifications_enabled': notificationsEnabled,
+      'fun_mode_enabled': funModeEnabled,
     };
   }
 
@@ -54,6 +58,7 @@ class SettingsModel extends Settings {
       soundVolume: settings.soundVolume,
       vibrationEnabled: settings.vibrationEnabled,
       notificationsEnabled: settings.notificationsEnabled,
+      funModeEnabled: settings.funModeEnabled,
     );
   }
 
@@ -66,6 +71,7 @@ class SettingsModel extends Settings {
     double? soundVolume,
     bool? vibrationEnabled,
     bool? notificationsEnabled,
+    bool? funModeEnabled,
   }) {
     return SettingsModel(
       themeMode: themeMode ?? this.themeMode,
@@ -74,6 +80,7 @@ class SettingsModel extends Settings {
       soundVolume: soundVolume ?? this.soundVolume,
       vibrationEnabled: vibrationEnabled ?? this.vibrationEnabled,
       notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
+      funModeEnabled: funModeEnabled ?? this.funModeEnabled,
     );
   }
 

@@ -6,6 +6,7 @@ import 'package:gardas/features/math_puzzle/math_game_impl.dart';
 import 'package:gardas/games_interface/game_interface.dart';
 import 'package:gardas/games_interface/game_registry.dart';
 import 'package:gardas/injection_container.dart';
+import 'package:gardas/presentation/pages/game/fun_game_page.dart';
 import 'package:gardas/presentation/pages/game_base_page.dart';
 import 'package:gardas/presentation/pages/home/home_page.dart';
 import 'package:gardas/presentation/pages/settings/settings_page.dart';
@@ -16,6 +17,9 @@ import 'package:gardas/presentation/pages/settings/settings_page.dart';
 class AppRouter {
   /// The game registry instance
   final GameRegistry _gameRegistry = sl<GameRegistry>();
+  
+  /// Boolean to determine whether to use the fun mode for games
+  bool useFunMode = true;
   
   /// Creates and registers all games
   void registerGames() {
@@ -49,20 +53,65 @@ class AppRouter {
   
   /// Navigates to a game route
   void navigateToGame(BuildContext context, GameInterface game) {
-    Navigator.pushNamed(context, game.gameInfo.routePath);
+    if (useFunMode) {
+      // Use animated transition with FunGamePage in fun mode
+      Navigator.of(context).push(
+        PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) => 
+            FunGamePage(gameInterface: game),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            const begin = Offset(0.0, 1.0);
+            const end = Offset.zero;
+            const curve = Curves.easeOutCubic;
+
+            var tween = Tween(begin: begin, end: end).chain(
+              CurveTween(curve: curve),
+            );
+
+            return SlideTransition(
+              position: animation.drive(tween),
+              child: child,
+            );
+          },
+          transitionDuration: const Duration(milliseconds: 600),
+        ),
+      );
+    } else {
+      // Standard navigation in normal mode
+      // GameInfo'ya erişmek için gameInfo özelliğini kullan
+      Navigator.pushNamed(context, game.gameInfo.routePath);
+    }
   }
   
   /// Navigates to a game tutorial
   void navigateToGameTutorial(BuildContext context, GameInterface game) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => GameBasePage(
-          game: game,
-          startWithTutorial: true,
+    if (useFunMode) {
+      // Show tutorial in FunGamePage
+      Navigator.of(context).push(
+        PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) => 
+            FunGamePage(gameInterface: game),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: animation,
+              child: child,
+            );
+          },
+          transitionDuration: const Duration(milliseconds: 500),
         ),
-      ),
-    );
+      );
+    } else {
+      // Standard navigation to tutorial
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => GameBasePage(
+            game: game,
+            startWithTutorial: true,
+          ),
+        ),
+      );
+    }
   }
   
   /// Navigates to settings
@@ -89,13 +138,37 @@ class AppRouter {
     if (routeName != null) {
       try {
         final game = _gameRegistry.getGameByRoute(routeName);
-        return MaterialPageRoute(
-          settings: settings,
-          builder: (context) => GameBasePage(
-            game: game,
-            initialDifficulty: arguments is GameDifficulty ? arguments : null,
-          ),
-        );
+        
+        // Null kontrolü ekle
+        if (game != null) {
+          if (useFunMode) {
+            // Use FunGamePage in fun mode
+            return PageRouteBuilder(
+              settings: settings,
+              pageBuilder: (context, animation, secondaryAnimation) => 
+                FunGamePage(gameInterface: game),
+              transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                return FadeTransition(
+                  opacity: animation,
+                  child: ScaleTransition(
+                    scale: Tween<double>(begin: 0.9, end: 1.0).animate(animation),
+                    child: child,
+                  ),
+                );
+              },
+              transitionDuration: const Duration(milliseconds: 400),
+            );
+          } else {
+            // Use standard GameBasePage in normal mode
+            return MaterialPageRoute(
+              settings: settings,
+              builder: (context) => GameBasePage(
+                game: game,
+                initialDifficulty: arguments is GameDifficulty ? arguments : null,
+              ),
+            );
+          }
+        }
       } catch (e) {
         // Route is not a game route, continue normal routing
       }
