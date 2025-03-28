@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gardas/core/constants/app_strings.dart';
 import 'package:gardas/presentation/bloc/user/user_bloc.dart';
 import 'package:gardas/presentation/routes/app_router.dart';
+import 'package:gardas/games_interface/game_registry.dart';
+import 'package:gardas/presentation/pages/home/widgets/game_card.dart';
 import 'package:gardas/injection_container.dart';
 
 /// Scaffold wrapper for consistent UI across the app
@@ -23,6 +25,9 @@ class ScaffoldWrapper extends StatefulWidget {
   
   /// The currently selected index in the bottom navigation bar
   final int currentIndex;
+  
+  /// Whether to show back button
+  final bool showBackButton;
 
   const ScaffoldWrapper({
     Key? key,
@@ -31,6 +36,7 @@ class ScaffoldWrapper extends StatefulWidget {
     this.showBottomBar = true,
     this.showDrawer = true,
     this.currentIndex = 0,
+    this.showBackButton = false,
   }) : super(key: key);
 
   @override
@@ -39,12 +45,19 @@ class ScaffoldWrapper extends StatefulWidget {
 
 class _ScaffoldWrapperState extends State<ScaffoldWrapper> {
   final AppRouter _router = sl<AppRouter>();
+  final GameRegistry _gameRegistry = sl<GameRegistry>();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
+        leading: widget.showBackButton 
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => Navigator.of(context).pop(),
+              )
+            : null,
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),
@@ -77,7 +90,7 @@ class _ScaffoldWrapperState extends State<ScaffoldWrapper> {
             title: const Text("Oyunlar"),
             onTap: () {
               Navigator.pop(context);
-              // Oyunlar sayfasına yönlendirme yapılabilir (gerekirse)
+              _showGamesPage();
             },
           ),
           ListTile(
@@ -157,7 +170,7 @@ class _ScaffoldWrapperState extends State<ScaffoldWrapper> {
             _router.navigateToHome(context);
             break;
           case 1:
-            // Oyunlar sayfasına yönlendirme yapılabilir (gerekirse)
+            _showGamesPage();
             break;
           case 2:
             _router.navigateToSettings(context);
@@ -178,6 +191,14 @@ class _ScaffoldWrapperState extends State<ScaffoldWrapper> {
           label: AppStrings.settingsTitle,
         ),
       ],
+    );
+  }
+
+  void _showGamesPage() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => _GamesPage(gameRegistry: _gameRegistry, router: _router),
+      ),
     );
   }
 
@@ -207,5 +228,56 @@ class _ScaffoldWrapperState extends State<ScaffoldWrapper> {
     } else {
       return name.substring(0, 1).toUpperCase();
     }
+  }
+}
+
+/// Games Page
+class _GamesPage extends StatelessWidget {
+  final GameRegistry gameRegistry;
+  final AppRouter router;
+
+  const _GamesPage({
+    Key? key, 
+    required this.gameRegistry,
+    required this.router,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final games = gameRegistry.getAllGameInfo();
+    
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Oyunlar'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: GridView.builder(
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+            childAspectRatio: 1.0,
+          ),
+          itemCount: games.length,
+          itemBuilder: (context, index) {
+            final game = games[index];
+            return GameCard(
+              game: game,
+              onTap: () {
+                final gameInterface = gameRegistry.getGame(game.id);
+                if (gameInterface != null) {
+                  router.navigateToGame(context, gameInterface);
+                }
+              },
+            );
+          },
+        ),
+      ),
+    );
   }
 }
