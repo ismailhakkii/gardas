@@ -27,6 +27,7 @@ import 'package:gardas/games_interface/game_registry.dart';
 import 'package:gardas/presentation/bloc/settings/settings_bloc.dart';
 import 'package:gardas/presentation/bloc/user/user_bloc.dart';
 import 'package:gardas/features/flags_game/presentation/bloc/flags_game_bloc.dart';
+import 'package:gardas/presentation/routes/app_router.dart';
 
 /// Service locator instance
 final GetIt sl = GetIt.instance;
@@ -75,6 +76,9 @@ Future<void> init() async {
   
   // Game Registry
   sl.registerSingleton<GameRegistry>(GameRegistry());
+  
+  // AppRouter
+  sl.registerSingleton<AppRouter>(AppRouter());
   
   // BLoCs
   sl.registerFactory<UserBloc>(() => UserBloc(

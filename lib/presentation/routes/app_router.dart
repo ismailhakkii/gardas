@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:gardas/core/constants/app_constants.dart';
 import 'package:gardas/domain/entities/game.dart';
 import 'package:gardas/features/flags_game/flags_game_impl.dart';
+import 'package:gardas/features/math_puzzle/math_game_impl.dart';
 import 'package:gardas/games_interface/game_interface.dart';
 import 'package:gardas/games_interface/game_registry.dart';
 import 'package:gardas/injection_container.dart';
@@ -21,7 +22,8 @@ class AppRouter {
     // Register flags game
     _gameRegistry.registerGame(FlagsGame());
     
-    // Register other games here...
+    // Register math game
+    _gameRegistry.registerGame(MathGame());
   }
   
   /// Returns the app routes
@@ -34,6 +36,11 @@ class AppRouter {
       // Game-specific routes
       AppConstants.flagsGameRoute: (context) => GameBasePage(
         game: _gameRegistry.getGameByRoute(AppConstants.flagsGameRoute),
+      ),
+      
+      // Math game route
+      '/math-game': (context) => GameBasePage(
+        game: _gameRegistry.getGameByRoute('/math-game'),
       ),
     };
     

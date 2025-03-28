@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:gardas/core/constants/app_colors.dart';
 import 'package:gardas/core/constants/app_strings.dart';
 import 'package:gardas/core/widgets/custom_button.dart';
 import 'package:gardas/core/widgets/error_display_widget.dart';
@@ -97,11 +96,6 @@ class _FlagGamePageState extends State<FlagGamePage> {
   
   void _goToNextQuestion() {
     context.read<FlagsGameBloc>().add(NextQuestionEvent());
-  }
-  
-  void _endGame() {
-    // To be implemented: get current user ID
-    context.read<FlagsGameBloc>().add(const EndGameEvent(userId: 'current_user'));
   }
   
   void _pauseGame() {
@@ -232,39 +226,44 @@ class _FlagGamePageState extends State<FlagGamePage> {
   }
   
   Widget _buildAnswerResultView(AnswerSelected state) {
+    // Piksel taşmasını önlemek için LayoutBuilder kullanıyoruz
     return SafeArea(
-      child: Column(
-        children: [
-          _buildGameHeader(state.gameState),
-          Expanded(
-            child: FlagQuestionWidget(
-              question: state.gameState.currentQuestion,
-              selectedOption: state.selectedOption,
-              isCorrect: state.isCorrect,
-              enabled: false,
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Expanded(
-                  child: CustomButton(
-                    text: state.gameState.isLastQuestion
-                        ? AppStrings.finish
-                        : AppStrings.next,
-                          onPressed: _isAnswering ? () {} : _goToNextQuestion,
-                    type: ButtonType.primary,
-                    fullWidth: true,
-                    icon: state.gameState.isLastQuestion
-                        ? Icons.check
-                        : Icons.arrow_forward,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return Column(
+            children: [
+              _buildGameHeader(state.gameState),
+              
+              // Esnek bir şekilde büyüyen içerik
+              Expanded(
+                child: SingleChildScrollView(
+                  child: FlagQuestionWidget(
+                    question: state.gameState.currentQuestion,
+                    selectedOption: state.selectedOption,
+                    isCorrect: state.isCorrect,
+                    enabled: false,
                   ),
                 ),
-              ],
-            ),
-          ),
-        ],
+              ),
+              
+              // Sabit yüksekliğe sahip alt buton bölgesi
+              Container(
+                padding: const EdgeInsets.all(16),
+                child: CustomButton(
+                  text: state.gameState.isLastQuestion
+                      ? AppStrings.finish
+                      : AppStrings.next,
+                  onPressed: _isAnswering ? () {} : _goToNextQuestion,
+                  type: ButtonType.primary,
+                  fullWidth: true,
+                  icon: state.gameState.isLastQuestion
+                      ? Icons.check
+                      : Icons.arrow_forward,
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

@@ -24,8 +24,8 @@ void main() async {
   // Initialize dependencies
   await di.init();
   
-  // Register games
-  final appRouter = AppRouter();
+  // Get AppRouter from GetIt and register games
+  final appRouter = di.sl<AppRouter>();
   appRouter.registerGames();
   
   // Run app

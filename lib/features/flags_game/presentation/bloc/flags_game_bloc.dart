@@ -77,6 +77,16 @@ class LoadHighScoreEvent extends FlagsGameEvent {
 
 class ResetGameEvent extends FlagsGameEvent {}
 
+// Yeni eklenen event - Timer için
+class TimerTickEvent extends FlagsGameEvent {
+  final double newTimeRemaining;
+  
+  const TimerTickEvent({required this.newTimeRemaining});
+  
+  @override
+  List<Object?> get props => [newTimeRemaining];
+}
+
 // States
 abstract class FlagsGameState extends Equatable {
   const FlagsGameState();
@@ -258,6 +268,7 @@ class FlagsGameBloc extends Bloc<FlagsGameEvent, FlagsGameState> {
     on<EndGameEvent>(_onEndGame);
     on<LoadHighScoreEvent>(_onLoadHighScore);
     on<ResetGameEvent>(_onResetGame);
+    on<TimerTickEvent>(_onTimerTick); // Yeni eklenen event handler
   }
 
   @override
@@ -266,12 +277,10 @@ class FlagsGameBloc extends Bloc<FlagsGameEvent, FlagsGameState> {
     return super.close();
   }
 
-  void _startTimer(Emitter<FlagsGameState> emit) {
+  void _startTimer() {
     _cancelTimer();
     
     if (state is GameRunning) {
-      final gameState = state as GameRunning;
-      
       _gameTimer = Timer.periodic(
         const Duration(milliseconds: 100),
         (timer) {
@@ -279,26 +288,8 @@ class FlagsGameBloc extends Bloc<FlagsGameEvent, FlagsGameState> {
             final currentState = state as GameRunning;
             final newTimeRemaining = currentState.timeRemaining - 0.1;
             
-            if (newTimeRemaining <= 0) {
-              _cancelTimer();
-              emit(AnswerSelected(
-                selectedOption: FlagOption(
-                  countryCode: '',
-                  countryName: '',
-                  flagEmoji: '',
-                ),
-                correctOption: currentState.currentQuestion.correctOption,
-                isCorrect: false,
-                score: currentState.score,
-                timeSpent: timeLimit.toDouble(),
-                gameState: currentState.copyWith(
-                  timeRemaining: 0,
-                  wrongAnswers: currentState.wrongAnswers + 1,
-                ),
-              ));
-            } else {
-              emit(currentState.copyWith(timeRemaining: newTimeRemaining));
-            }
+            // Emit yerine event ekliyoruz (doğru yöntem)
+            add(TimerTickEvent(newTimeRemaining: newTimeRemaining));
           }
         },
       );
@@ -348,7 +339,7 @@ class FlagsGameBloc extends Bloc<FlagsGameEvent, FlagsGameState> {
         timeRemaining: timeLimit.toDouble(),
       ));
       
-      _startTimer(emit);
+      _startTimer();
     }
   }
 
@@ -369,7 +360,7 @@ class FlagsGameBloc extends Bloc<FlagsGameEvent, FlagsGameState> {
     if (state is GamePaused) {
       final pausedState = (state as GamePaused).gameState;
       emit(pausedState);
-      _startTimer(emit);
+      _startTimer();
     }
   }
 
@@ -432,7 +423,39 @@ class FlagsGameBloc extends Bloc<FlagsGameEvent, FlagsGameState> {
         timeRemaining: timeLimit.toDouble(),
       ));
       
-      _startTimer(emit);
+      _startTimer();
+    }
+  }
+
+  // Yeni eklenen handler
+  Future<void> _onTimerTick(
+    TimerTickEvent event,
+    Emitter<FlagsGameState> emit,
+  ) async {
+    if (state is GameRunning) {
+      final currentState = state as GameRunning;
+      final newTimeRemaining = event.newTimeRemaining;
+      
+      if (newTimeRemaining <= 0) {
+        _cancelTimer();
+        emit(AnswerSelected(
+          selectedOption: FlagOption(
+            countryCode: '',
+            countryName: '',
+            flagEmoji: '',
+          ),
+          correctOption: currentState.currentQuestion.correctOption,
+          isCorrect: false,
+          score: currentState.score,
+          timeSpent: timeLimit.toDouble(),
+          gameState: currentState.copyWith(
+            timeRemaining: 0,
+            wrongAnswers: currentState.wrongAnswers + 1,
+          ),
+        ));
+      } else {
+        emit(currentState.copyWith(timeRemaining: newTimeRemaining));
+      }
     }
   }
 

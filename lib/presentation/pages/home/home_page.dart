@@ -11,6 +11,7 @@ import 'package:gardas/presentation/pages/home/widgets/game_card.dart';
 import 'package:gardas/presentation/pages/home/widgets/profile_section.dart';
 import 'package:gardas/presentation/pages/home/widgets/stats_section.dart';
 import 'package:gardas/presentation/routes/app_router.dart';
+import 'package:gardas/presentation/widgets/scaffold_wrapper.dart';
 
 /// Home page
 ///
@@ -24,7 +25,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final GameRegistry _gameRegistry = sl<GameRegistry>();
-  final AppRouter _router = AppRouter();
+  final AppRouter _router = sl<AppRouter>();
 
   @override
   void initState() {
@@ -37,16 +38,9 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(AppStrings.homeTitle),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () => _router.navigateToSettings(context),
-          ),
-        ],
-      ),
+    return ScaffoldWrapper(
+      title: AppStrings.homeTitle,
+      currentIndex: 0,
       body: BlocBuilder<UserBloc, UserState>(
         builder: (context, userState) {
           if (userState is UserLoading) {
@@ -126,6 +120,9 @@ class _HomePageState extends State<HomePage> {
           
           // Stats section
           const StatsSection(),
+          
+          // Bottom padding to avoid content being hidden by bottom navigation bar
+          const SizedBox(height: 70),
         ],
       ),
     );
