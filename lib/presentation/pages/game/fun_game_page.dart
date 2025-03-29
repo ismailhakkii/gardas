@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:gardas/core/theme/fun_app_theme.dart';
 import 'package:gardas/games_interface/game_interface.dart';
 import 'package:gardas/core/widgets/custom_button.dart';
-import 'package:gardas/domain/entities/game.dart'; // Eklendi
-import 'package:gardas/domain/entities/score.dart'; // Eklendi
+import 'package:gardas/domain/entities/game.dart';
+import 'package:gardas/domain/entities/score.dart';
 import 'package:lottie/lottie.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'dart:math' as math;
+import 'dart:async';
 
 /// Fun animated game page base
 ///
@@ -56,9 +57,33 @@ class _FunGamePageState extends State<FunGamePage> with TickerProviderStateMixin
 
   @override
   void dispose() {
+    // Eğer oyun henüz durulmadıysa, önce durdur
+    if (_isGameStarted) {
+      try {
+        widget.gameInterface.endGame();
+      } catch (e) {
+        print("Oyun sonlandırma hatası: $e");
+      }
+    }
+    
+    // Animasyon kontrolcülerini temizle
+    if (_bgAnimationController.isAnimating) {
+      _bgAnimationController.stop();
+    }
     _bgAnimationController.dispose();
+    
+    if (_gameStartController.isAnimating) {
+      _gameStartController.stop();
+    }
     _gameStartController.dispose();
-    widget.gameInterface.dispose(); // Oyun kaynaklarını temizle
+    
+    // Son olarak oyun interface'ini temizle
+    try {
+      widget.gameInterface.dispose();
+    } catch (e) {
+      print("Interface dispose hatası: $e");
+    }
+    
     super.dispose();
   }
 
@@ -96,35 +121,129 @@ class _FunGamePageState extends State<FunGamePage> with TickerProviderStateMixin
     // Örneğin, bir oyun bitti ekranı gösterebilirsiniz
   }
 
+  void _exitGame() {
+    // Önce tutorial'ı kontrol et
+    if (_showTutorial) {
+      _hideGameTutorial();
+      return;
+    }
+    
+    // Kaynak temizliği yap ve çıkış
+    try {
+      // Eğer oyun başlatılmışsa, kaynakları temizle
+      if (_isGameStarted) {
+        // Animasyonları durdur
+        _bgAnimationController.stop();
+        _gameStartController.stop();
+        
+        // Oyun kaynakları temizleme (game interface'i koruyarak)
+        widget.gameInterface.endGame();
+      }
+      
+      // Şimdi çıkış yapabiliriz
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+    } catch (e) {
+      // Hata durumunda zorla çıkış yap
+      print("Çıkış yaparken hata: $e");
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+    }
+  }
+  
+  // Özel header widget'ı
+  Widget _buildCustomHeader() {
+    return Container(
+      width: double.infinity,
+      color: FunAppTheme.primaryColor,
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+      child: Row(
+        children: [
+          // Geri butonu
+          IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: _exitGame,
+          ),
+          
+          // Başlık
+          Expanded(
+            child: Text(
+              widget.gameInterface.gameInfo.name,
+              style: const TextStyle(
+                color: Colors.white, 
+                fontSize: 20, 
+                fontWeight: FontWeight.bold
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          
+          // Sağ taraftaki butonlar
+          _isGameStarted
+              ? IconButton(
+                  onPressed: _showGameTutorial,
+                  icon: const Icon(
+                    Icons.help_outline,
+                    color: Colors.white,
+                  ),
+                )
+              : const SizedBox(width: 48), // Boşluk için placeholder
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        children: [
-          // Animated background
-          AnimatedBuilder(
-            animation: _bgAnimationController,
-            builder: (context, child) {
-              return CustomPaint(
-                painter: FunBackgroundPainter(
-                  animation: _bgAnimationController.value,
-                  primaryColor: FunAppTheme.primaryColor,
-                  secondaryColor: FunAppTheme.accentColor,
-                ),
-                size: MediaQuery.of(context).size,
-              );
-            },
-          ),
-          
-          // Main content
-          SafeArea(
-            child: _isGameStarted ? _buildGameContent() : _buildStartScreen(),
-          ),
-          
-          // Tutorial overlay
-          if (_showTutorial)
-            _buildTutorialOverlay(),
-        ],
+    return WillPopScope(
+      onWillPop: () async {
+        // Geri tuşuna basıldığında tutorial açıksa önce onu kapat
+        if (_showTutorial) {
+          _hideGameTutorial();
+          return false; // Navigasyon engellendi
+        }
+        return true; // Normal navigasyona izin ver
+      },
+      child: Scaffold(
+        // AppBar yok - bunun yerine sayfaya özel bir header kullanacağız
+        body: Stack(
+          children: [
+            // Animated background
+            AnimatedBuilder(
+              animation: _bgAnimationController,
+              builder: (context, child) {
+                return CustomPaint(
+                  painter: FunBackgroundPainter(
+                    animation: _bgAnimationController.value,
+                    primaryColor: FunAppTheme.primaryColor,
+                    secondaryColor: FunAppTheme.accentColor,
+                  ),
+                  size: MediaQuery.of(context).size,
+                );
+              },
+            ),
+            
+            // Main content
+            SafeArea(
+              child: Column(
+                children: [
+                  // Custom header - tek bir appbar yerine custom header widget
+                  _buildCustomHeader(),
+                  // Ana içerik
+                  Expanded(
+                    child: _isGameStarted ? _buildGameContent() : _buildStartScreen(),
+                  ),
+                ],
+              ),
+            ),
+            
+            // Tutorial overlay
+            if (_showTutorial)
+              _buildTutorialOverlay(),
+          ],
+        ),
       ),
     );
   }
@@ -334,8 +453,6 @@ class _FunGamePageState extends State<FunGamePage> with TickerProviderStateMixin
         return 'Orta';
       case GameDifficulty.hard:
         return 'Zor';
-
-
     }
   }
 
@@ -355,33 +472,11 @@ class _FunGamePageState extends State<FunGamePage> with TickerProviderStateMixin
           ),
         );
       },
-      child: Stack(
-        children: [
-          // Main game widget - GameInterface'ten doğru şekilde oluşturuldu
-          widget.gameInterface.buildGame(
-            context: context,
-            difficulty: _selectedDifficulty,
-            onScoreUpdated: _handleScoreUpdate,
-            onGameOver: _handleGameOver,
-          ),
-          
-          // Tutorial button
-          Positioned(
-            top: 8,
-            right: 8,
-            child: IconButton(
-              onPressed: _showGameTutorial,
-              icon: const Icon(
-                Icons.help_outline,
-                color: Colors.white,
-              ),
-              style: IconButton.styleFrom(
-                backgroundColor: FunAppTheme.primaryColor.withOpacity(0.7),
-                padding: const EdgeInsets.all(8),
-              ),
-            ),
-          ),
-        ],
+      child: widget.gameInterface.buildGame(
+        context: context,
+        difficulty: _selectedDifficulty,
+        onScoreUpdated: _handleScoreUpdate,
+        onGameOver: _handleGameOver,
       ),
     );
   }
@@ -398,17 +493,45 @@ class _FunGamePageState extends State<FunGamePage> with TickerProviderStateMixin
     }
     
     // Varsayılan tutorial
-    return GestureDetector(
-      onTap: _hideGameTutorial,
-      child: Container(
-        color: Colors.black.withOpacity(0.8),
-        child: Center(
+    return Stack(
+      children: [
+        // Arka plan için saydam overlay
+        GestureDetector(
+          onTap: _hideGameTutorial, // Arka plana tıklandığında da kapansın
+          child: Container(
+            color: Colors.black.withOpacity(0.8),
+          ),
+        ),
+        
+        // Kapatma butonu - sağ üst köşeye
+        Positioned(
+          top: 16,
+          right: 16,
+          child: IconButton(
+            onPressed: _hideGameTutorial,
+            icon: const Icon(Icons.close, color: Colors.white, size: 30),
+            style: IconButton.styleFrom(
+              backgroundColor: Colors.red.withOpacity(0.7),
+              padding: const EdgeInsets.all(8),
+            ),
+          ),
+        ),
+        
+        // Tutorial içeriği
+        Center(
           child: Container(
             margin: const EdgeInsets.all(24),
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.3),
+                  blurRadius: 10,
+                  spreadRadius: 2,
+                ),
+              ],
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -438,17 +561,30 @@ class _FunGamePageState extends State<FunGamePage> with TickerProviderStateMixin
                 
                 const SizedBox(height: 24),
                 
-                ElevatedButton(
-                  onPressed: _hideGameTutorial,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: FunAppTheme.accentColor,
-                    foregroundColor: Colors.black87,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 12,
+                SizedBox(
+                  width: 200, // Daha geniş buton
+                  height: 50, // Daha yüksek buton
+                  child: ElevatedButton(
+                    onPressed: _hideGameTutorial,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: FunAppTheme.accentColor,
+                      foregroundColor: Colors.black87,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                    ),
+                    child: const Text(
+                      'Anladım',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
-                  child: const Text('Anladım'),
                 ),
               ],
             ),
@@ -458,7 +594,7 @@ class _FunGamePageState extends State<FunGamePage> with TickerProviderStateMixin
             curve: Curves.easeOutBack,
           ),
         ),
-      ),
+      ],
     );
   }
 

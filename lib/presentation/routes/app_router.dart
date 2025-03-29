@@ -58,7 +58,7 @@ class AppRouter {
       Navigator.of(context).push(
         PageRouteBuilder(
           pageBuilder: (context, animation, secondaryAnimation) => 
-            FunGamePage(gameInterface: game),
+            FunGamePage(gameInterface: game),  // gameInterface parameter adı korundu
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             const begin = Offset(0.0, 1.0);
             const end = Offset.zero;
@@ -90,7 +90,7 @@ class AppRouter {
       Navigator.of(context).push(
         PageRouteBuilder(
           pageBuilder: (context, animation, secondaryAnimation) => 
-            FunGamePage(gameInterface: game),
+            FunGamePage(gameInterface: game),  // gameInterface parameter adı korundu
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return FadeTransition(
               opacity: animation,
@@ -146,7 +146,7 @@ class AppRouter {
             return PageRouteBuilder(
               settings: settings,
               pageBuilder: (context, animation, secondaryAnimation) => 
-                FunGamePage(gameInterface: game),
+                FunGamePage(gameInterface: game),  // gameInterface parameter adı korundu
               transitionsBuilder: (context, animation, secondaryAnimation, child) {
                 return FadeTransition(
                   opacity: animation,
