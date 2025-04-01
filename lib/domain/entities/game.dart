@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:flutter/src/widgets/icon_data.dart';
 
 /// Difficulty level for games
 enum GameDifficulty {
@@ -52,7 +53,7 @@ class Game extends Equatable {
     this.hasSoundEffects = false,
     this.isOfflineAvailable = true,
     this.hasTutorial = false,
-    this.tags = const [],
+    this.tags = const [], required IconData iconData,
   });
   
   @override

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gardas/core/constants/app_constants.dart';
 import 'package:gardas/domain/entities/game.dart';
+import 'package:gardas/features/basket_game/basket_game_impl.dart';
 import 'package:gardas/features/flags_game/flags_game_impl.dart';
 import 'package:gardas/features/math_puzzle/math_game_impl.dart';
 import 'package:gardas/games_interface/game_interface.dart';
@@ -28,9 +29,13 @@ class AppRouter {
     
     // Register math game
     _gameRegistry.registerGame(MathGame());
+
+    // Register other games here
+    _gameRegistry.registerGame(BasketGame());
+    
   }
   
-  /// Returns the app routes
+ /// Returns the app routes
   Map<String, WidgetBuilder> get routes {
     final routes = <String, WidgetBuilder>{
       // Main routes
@@ -45,6 +50,11 @@ class AppRouter {
       // Math game route
       '/math-game': (context) => GameBasePage(
         game: _gameRegistry.getGameByRoute('/math-game'),
+      ),
+      
+      // Basket game route
+      '/basket-game': (context) => GameBasePage(
+        game: _gameRegistry.getGameByRoute('/basket-game'),
       ),
     };
     

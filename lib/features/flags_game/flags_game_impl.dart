@@ -34,7 +34,7 @@ class FlagsGame extends BaseGame {
     hasSoundEffects: true,
     isOfflineAvailable: true,
     hasTutorial: true,
-    tags: ['quiz', 'bayraklar', 'ülkeler', 'coğrafya'],
+    tags: ['quiz', 'bayraklar', 'ülkeler', 'coğrafya'], iconData: Icons.flag,
   );
   
   @override

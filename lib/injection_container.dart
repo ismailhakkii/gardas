@@ -29,6 +29,9 @@ import 'package:gardas/presentation/bloc/user/user_bloc.dart';
 import 'package:gardas/features/flags_game/presentation/bloc/flags_game_bloc.dart';
 import 'package:gardas/presentation/routes/app_router.dart';
 
+// Basket oyunu bağımlılıkları
+import 'package:gardas/features/basket_game/basket_game_impl.dart';
+
 /// Service locator instance
 final GetIt sl = GetIt.instance;
 
@@ -99,4 +102,19 @@ Future<void> init() async {
     saveFlagScore: sl(),
     getHighScore: sl(),
   ));
+  
+  // Oyun bağımlılıkları
+  _setupGameDependencies();
+}
+
+/// Oyunlarla ilgili bağımlılıkları ayarlar
+void _setupGameDependencies() {
+  // Mevcut oyunlar
+  sl.registerFactory<BasketGame>(() => BasketGame());
+  
+  // Oyunları kaydet
+  final gameRegistry = sl<GameRegistry>();
+  
+  // Basket oyununu kaydet
+  gameRegistry.registerGame(sl<BasketGame>());
 }

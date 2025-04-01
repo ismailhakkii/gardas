@@ -60,7 +60,7 @@ class MathGame extends BaseGame {
   int get wrongAnswers => _wrongAnswers;
   
   @override
-  Game get gameInfo => const Game(
+  Game get gameInfo => Game(
     id: 'math_game',
     name: 'Matematik Bulmaca',
     description: 'Matematik işlemlerini çözerek puanları topla!',
@@ -70,7 +70,7 @@ class MathGame extends BaseGame {
     hasSoundEffects: true,
     isOfflineAvailable: true,
     hasTutorial: false,
-    tags: ['matematik', 'bulmaca', 'zeka', 'eğitim'],
+    tags: ['matematik', 'bulmaca', 'zeka', 'eğitim'], iconData: Icons.calculate,
   );
   
   @override

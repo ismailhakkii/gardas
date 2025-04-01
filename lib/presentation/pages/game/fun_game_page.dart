@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:gardas/core/theme/fun_app_theme.dart';
 import 'package:gardas/games_interface/game_interface.dart';
+import 'dart:async';
 import 'package:gardas/core/widgets/custom_button.dart';
 import 'package:gardas/domain/entities/game.dart';
 import 'package:gardas/domain/entities/score.dart';
 import 'package:lottie/lottie.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'dart:math' as math;
-import 'dart:async';
 
 /// Fun animated game page base
 ///
@@ -57,33 +57,39 @@ class _FunGamePageState extends State<FunGamePage> with TickerProviderStateMixin
 
   @override
   void dispose() {
-    // Eğer oyun henüz durulmadıysa, önce durdur
-    if (_isGameStarted) {
-      try {
-        widget.gameInterface.endGame();
-      } catch (e) {
-        print("Oyun sonlandırma hatası: $e");
-      }
-    }
+    print("FunGamePage - Disposing resources");
     
-    // Animasyon kontrolcülerini temizle
+    // Tüm zamanlayıcıları ve animasyonları hemen durdur
     if (_bgAnimationController.isAnimating) {
       _bgAnimationController.stop();
     }
-    _bgAnimationController.dispose();
     
     if (_gameStartController.isAnimating) {
       _gameStartController.stop();
     }
-    _gameStartController.dispose();
     
-    // Son olarak oyun interface'ini temizle
+    // Animasyon kontrolcülerini temizle
     try {
-      widget.gameInterface.dispose();
+      _bgAnimationController.dispose();
+      _gameStartController.dispose();
     } catch (e) {
-      print("Interface dispose hatası: $e");
+      print("Animation controller dispose error: $e");
     }
     
+    // Oyunu temizle
+    try {
+      // Eğer oyun başlatılmışsa, önce sonlandır
+      if (_isGameStarted) {
+        widget.gameInterface.endGame();
+      }
+      
+      // GameInterface'i temizle
+      widget.gameInterface.dispose();
+    } catch (e) {
+      print("Game interface dispose error: $e");
+    }
+    
+    print("FunGamePage - Resources disposed");
     super.dispose();
   }
 
@@ -121,36 +127,49 @@ class _FunGamePageState extends State<FunGamePage> with TickerProviderStateMixin
     // Örneğin, bir oyun bitti ekranı gösterebilirsiniz
   }
 
+  // Oyundan çıkış işlemi için
+  // Daha agresif çıkış işlemi
   void _exitGame() {
-    // Önce tutorial'ı kontrol et
-    if (_showTutorial) {
-      _hideGameTutorial();
-      return;
+    // State'i önce güncelleyelim
+    if (mounted) {
+      setState(() {
+        _showTutorial = false; // Tutorial'ı kapat
+      });
     }
     
-    // Kaynak temizliği yap ve çıkış
-    try {
-      // Eğer oyun başlatılmışsa, kaynakları temizle
-      if (_isGameStarted) {
-        // Animasyonları durdur
-        _bgAnimationController.stop();
-        _gameStartController.stop();
-        
-        // Oyun kaynakları temizleme (game interface'i koruyarak)
-        widget.gameInterface.endGame();
-      }
-      
-      // Şimdi çıkış yapabiliriz
-      if (mounted) {
-        Navigator.of(context).pop();
-      }
-    } catch (e) {
-      // Hata durumunda zorla çıkış yap
-      print("Çıkış yaparken hata: $e");
-      if (mounted) {
-        Navigator.of(context).pop();
-      }
+    // Animasyonları durdur
+    _bgAnimationController.stop();
+    if (_gameStartController.isAnimating) {
+      _gameStartController.stop();
     }
+    
+    // Oyuna özel kaynakları temizle (non-blocking)
+    Future.microtask(() {
+      try {
+        if (_isGameStarted) {
+          widget.gameInterface.pauseGame(); // Önce oyunu durdur
+          widget.gameInterface.endGame();
+        }
+      } catch (e) {
+        print("Game cleanup error: $e");
+      }
+    });
+    
+    // Hemen çıkış yap - microtask ile diğer UI işlemlerinin bitmesini beklemeden
+    Future.microtask(() {
+      if (mounted) {
+        // Mevcut sayfayı kaldır
+        Navigator.of(context).pop();
+        
+        // Eğer navigator.pop çalışmazsa, pushReplacement kullan
+        // Bu, mevcut sayfayı yeni bir sayfa ile değiştirir
+        // Future.delayed(const Duration(milliseconds: 100), () {
+        //   if (mounted) {
+        //     Navigator.of(context).pushReplacementNamed('/home');
+        //   }
+        // });
+      }
+    });
   }
   
   // Özel header widget'ı

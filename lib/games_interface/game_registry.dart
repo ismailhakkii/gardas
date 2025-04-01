@@ -42,9 +42,16 @@ class GameRegistry {
   }
   
   /// Returns all game info objects
-  List<Game> getAllGameInfo() {
-    return _games.values.map((game) => game.gameInfo).toList();
+ List<Game> getAllGameInfo() {
+  final games = <Game>[];
+  
+  for (final game in _games.values) {
+    games.add(game.gameInfo);
   }
+  
+  return games;
+}
+
   
   /// Returns games filtered by tags
   List<GameInterface> getGamesByTags(List<String> tags) {
@@ -63,3 +70,5 @@ class GameRegistry {
     _games.clear();
   }
 }
+
+
